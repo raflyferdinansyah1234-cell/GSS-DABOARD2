@@ -1,0 +1,1055 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>GSS Stock Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Oswald:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  /* Brand */
+  --color-brand-primary:#D42E26; --color-brand-primary-hover:#B8241D; --color-brand-primary-subtle:#F7D9D7;
+  /* Neutral */
+  --color-bg-light:#F5F3EF; --color-bg-dark:#4A473F; --color-bg-black:#111111;
+  --color-surface:#FFFFFF; --color-border:#E3DFD5;
+  --color-text-primary:#1A1815; --color-text-secondary:#6B675C; --color-text-inverse:#FFFFFF;
+  /* Semantic */
+  --color-accent-blue:#1D4ED8; --color-success:#1F8A5C; --color-warning:#D9A441; --color-danger:#D42E26;
+  /* heatmap tints */
+  --tint-danger:#FBE3E1; --tint-warning:#FAF0D8;
+  /* Typography */
+  --font-display:'Oswald','Anton',sans-serif;
+  --font-body:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  --font-serif:'Source Serif 4',Georgia,serif;
+  --text-xs:.75rem; --text-sm:.875rem; --text-base:1rem; --text-lg:1.25rem; --text-xl:1.75rem; --text-2xl:2.5rem;
+  --space-1:4px; --space-2:8px; --space-3:12px; --space-4:16px; --space-6:24px; --space-8:32px; --space-12:48px;
+  --radius-sm:6px; --radius-md:12px; --radius-lg:20px; --radius-pill:999px;
+  --shadow-card:0 1px 2px rgba(0,0,0,.04),0 4px 12px rgba(0,0,0,.06);
+  --shadow-panel:0 8px 24px rgba(0,0,0,.10);
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{background:var(--color-bg-light);color:var(--color-text-primary);font-family:var(--font-body);font-size:var(--text-base);line-height:1.45;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1280px;margin:0 auto;padding:var(--space-6)}
+h1,h2,h3{margin:0}
+button{font-family:inherit;cursor:pointer}
+a{color:var(--color-accent-blue)}
+.num{font-variant-numeric:tabular-nums;text-align:right}
+
+/* ---------- HEADER ---------- */
+.topbar{position:sticky;top:0;z-index:40;background:var(--color-bg-light);border-bottom:1px solid var(--color-border)}
+.topbar-inner{max-width:1280px;margin:0 auto;padding:var(--space-3) var(--space-6);display:flex;align-items:center;gap:var(--space-4);flex-wrap:wrap}
+.logo{display:flex;align-items:center;gap:var(--space-2);font-family:var(--font-display);font-weight:700;letter-spacing:.5px;font-size:var(--text-lg)}
+.logo .mark{width:30px;height:30px;border-radius:8px;background:var(--color-brand-primary);color:#fff;display:grid;place-items:center;font-size:14px}
+.logo small{font-family:var(--font-body);font-weight:500;color:var(--color-text-secondary);font-size:var(--text-xs);letter-spacing:0}
+.topbar-right{margin-left:auto;display:flex;align-items:center;gap:var(--space-3);flex-wrap:wrap}
+.updated{font-size:var(--text-xs);color:var(--color-text-secondary)}
+.updated b{color:var(--color-text-primary);font-weight:600}
+.btn{border:1px solid var(--color-border);background:var(--color-surface);color:var(--color-text-primary);padding:8px 14px;border-radius:var(--radius-pill);font-size:var(--text-sm);font-weight:600;display:inline-flex;align-items:center;gap:8px;transition:background-color .15s ease}
+.btn:hover{background:var(--color-bg-light)}
+.btn-primary{background:var(--color-brand-primary);border-color:var(--color-brand-primary);color:#fff}
+.btn-primary:hover{background:var(--color-brand-primary-hover)}
+.btn[disabled]{opacity:.6;cursor:default}
+.spinner{width:14px;height:14px;border:2px solid rgba(0,0,0,.2);border-top-color:currentColor;border-radius:50%;animation:spin .7s linear infinite;display:none}
+.btn.loading .spinner{display:inline-block}
+.btn.loading .lbl{opacity:.7}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ---------- NAV TABS ---------- */
+.navwrap{max-width:1280px;margin:var(--space-4) auto 0;padding:0 var(--space-6)}
+.nav{display:flex;gap:4px;background:var(--color-surface);border-radius:var(--radius-pill);box-shadow:var(--shadow-card);padding:5px;overflow-x:auto;scrollbar-width:thin}
+.nav button{white-space:nowrap;border:none;background:transparent;color:var(--color-text-secondary);padding:9px 16px;border-radius:var(--radius-pill);font-size:var(--text-sm);font-weight:600;transition:background-color .15s ease,color .15s ease}
+.nav button.active{background:var(--color-brand-primary);color:#fff}
+
+/* ---------- BANNERS ---------- */
+.banner{margin:var(--space-4) 0;padding:var(--space-3) var(--space-4);border-radius:var(--radius-md);font-size:var(--text-sm);display:flex;gap:10px;align-items:flex-start}
+.banner.warn{background:var(--tint-warning);border:1px solid var(--color-warning);color:#6b521a}
+.banner.err{background:var(--tint-danger);border:1px solid var(--color-danger);color:#8a1f1a}
+.banner.info{background:#fff;border:1px solid var(--color-border);color:var(--color-text-secondary)}
+.banner.demo{background:var(--color-bg-dark);color:#fff;border:none}
+.banner b{font-weight:700}
+.stale-badge{display:none;background:var(--color-warning);color:#3a2d08;font-size:var(--text-xs);font-weight:700;padding:3px 10px;border-radius:var(--radius-pill)}
+body.stale .stale-badge{display:inline-block}
+
+/* ---------- SECTION TITLES ---------- */
+.section-title{font-family:var(--font-display);font-size:var(--text-2xl);text-transform:uppercase;letter-spacing:.5px;line-height:1.05;margin-top:var(--space-6)}
+.section-sub{font-size:var(--text-sm);color:var(--color-text-secondary);margin-top:2px;margin-bottom:var(--space-4)}
+
+/* ---------- KPI CARDS ---------- */
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:var(--space-4)}
+.kpi{background:var(--color-surface);border-radius:var(--radius-md);box-shadow:var(--shadow-card);padding:var(--space-4);border:1px solid var(--color-border)}
+.kpi .ico{width:30px;height:30px;border-radius:8px;display:grid;place-items:center;font-size:16px;margin-bottom:var(--space-2)}
+.kpi .lbl{font-size:var(--text-xs);color:var(--color-text-secondary);text-transform:uppercase;letter-spacing:.4px}
+.kpi .val{font-family:var(--font-display);font-size:var(--text-xl);margin-top:2px}
+.kpi .hint{font-size:var(--text-xs);color:var(--color-text-secondary);margin-top:4px}
+
+/* ---------- CARDS / PANELS ---------- */
+.card{background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-md);box-shadow:var(--shadow-card);padding:var(--space-4);margin-top:var(--space-4)}
+.card h3{font-size:var(--text-sm);text-transform:uppercase;letter-spacing:.4px;color:var(--color-text-secondary);margin-bottom:var(--space-3)}
+.split{display:grid;grid-template-columns:1fr 1fr;gap:var(--space-4)}
+@media(max-width:900px){.split{grid-template-columns:1fr}}
+
+/* ---------- BAR CHARTS (no library, labels always visible) ---------- */
+.barrow{display:grid;grid-template-columns:160px 1fr 64px;align-items:center;gap:10px;margin-bottom:8px;font-size:var(--text-sm)}
+.barrow .name{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bartrack{background:var(--color-bg-light);border-radius:var(--radius-pill);height:18px;overflow:hidden}
+.barfill{height:100%;background:var(--color-brand-primary);border-radius:var(--radius-pill);min-width:2px}
+.barrow .num{font-weight:600}
+.barrow.clickable{cursor:pointer}
+.barrow.clickable:hover .name{color:var(--color-brand-primary)}
+.stacked{display:flex;height:22px;border-radius:var(--radius-pill);overflow:hidden;background:var(--color-bg-light)}
+.stacked span{display:block}
+.legend{display:flex;gap:16px;flex-wrap:wrap;font-size:var(--text-xs);margin-top:6px;color:var(--color-text-secondary)}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:middle}
+.gudrow{margin-bottom:14px}
+.gudrow .gname{font-weight:600;font-size:var(--text-sm);margin-bottom:5px;display:flex;justify-content:space-between}
+
+/* ---------- TABLES ---------- */
+.tablewrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:var(--text-sm)}
+thead th{background:var(--color-bg-light);font-size:var(--text-xs);font-weight:700;text-align:left;padding:10px 12px;border-bottom:1px solid var(--color-border);white-space:nowrap}
+thead th.num{text-align:right}
+tbody td{padding:10px 12px;border-bottom:1px solid var(--color-border);min-height:44px}
+tbody tr{min-height:44px}
+tbody tr.master{cursor:pointer}
+tbody tr.master:hover{background:var(--color-bg-light)}
+.chev{display:inline-block;width:14px;transition:transform .15s ease;color:var(--color-text-secondary)}
+tr.open .chev{transform:rotate(90deg)}
+.thumb{width:40px;height:40px;border-radius:var(--radius-sm);object-fit:cover;background:var(--color-bg-light);cursor:pointer;display:block}
+.ph{width:40px;height:40px;border-radius:var(--radius-sm);display:grid;place-items:center;background:var(--color-bg-dark);color:#fff;font-size:12px;font-weight:700;font-family:var(--font-display)}
+.prodcell{display:flex;align-items:center;gap:10px}
+.badge{font-size:var(--text-xs);font-weight:700;padding:3px 9px;border-radius:var(--radius-pill);white-space:nowrap}
+.badge.ok{background:#E3F3EB;color:var(--color-success)}
+.badge.warn{background:var(--tint-warning);color:#6b521a}
+.badge.danger{background:var(--tint-danger);color:#8a1f1a}
+.badge.src{background:var(--color-bg-light);color:var(--color-text-secondary);border:1px solid var(--color-border)}
+.detailrow td{background:var(--color-bg-light);padding:0}
+.detailbox{padding:var(--space-4)}
+
+/* ---------- SIZE MATRIX ---------- */
+.smx{border-collapse:separate;border-spacing:0}
+.smx td.cell{text-align:center;font-variant-numeric:tabular-nums;min-width:44px}
+.smx td.q0{background:var(--tint-danger);color:var(--color-danger);font-weight:700}
+.smx td.qlow{background:var(--tint-warning);color:#6b521a;font-weight:600}
+
+/* ---------- SEARCH / FILTER ---------- */
+.toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:var(--space-3)}
+.search{flex:1;min-width:180px;border:1px solid var(--color-border);border-radius:var(--radius-sm);padding:10px 12px;font-size:var(--text-sm);font-family:inherit}
+.chips{display:flex;gap:8px;flex-wrap:wrap}
+.chip{background:var(--color-brand-primary-subtle);color:var(--color-brand-primary);border:none;font-size:var(--text-xs);font-weight:700;padding:5px 10px;border-radius:var(--radius-pill);display:inline-flex;gap:6px;align-items:center}
+.chip button{border:none;background:transparent;color:inherit;font-weight:700;cursor:pointer;padding:0;line-height:1}
+.pager{display:flex;gap:8px;align-items:center;justify-content:flex-end;margin-top:var(--space-3);font-size:var(--text-sm)}
+.pager button{border:1px solid var(--color-border);background:#fff;border-radius:var(--radius-sm);padding:6px 12px}
+.pager button[disabled]{opacity:.4}
+
+/* ---------- SLIDE-IN DETAIL PANEL ---------- */
+.scrim{position:fixed;inset:0;background:rgba(0,0,0,.35);opacity:0;pointer-events:none;transition:opacity .2s ease;z-index:60}
+.scrim.show{opacity:1;pointer-events:auto}
+.drawer{position:fixed;top:0;right:0;height:100%;width:380px;max-width:92vw;background:var(--color-surface);box-shadow:var(--shadow-panel);transform:translateX(100%);transition:transform .25s ease;z-index:61;overflow-y:auto}
+.drawer.show{transform:translateX(0)}
+.drawer .dhead{padding:var(--space-4);border-bottom:1px solid var(--color-border);display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+.drawer .dbody{padding:var(--space-4)}
+.drawer .big-photo{width:100%;height:200px;object-fit:cover;border-radius:var(--radius-md);background:var(--color-bg-light)}
+.kv{display:grid;grid-template-columns:110px 1fr;gap:6px 10px;font-size:var(--text-sm);margin-top:var(--space-3)}
+.kv .k{color:var(--color-text-secondary)}
+.closex{border:none;background:var(--color-bg-light);border-radius:50%;width:30px;height:30px;font-size:16px}
+
+/* ---------- LIGHTBOX ---------- */
+.lightbox{position:fixed;inset:0;background:rgba(0,0,0,.85);display:none;place-items:center;z-index:80;padding:20px}
+.lightbox.show{display:grid}
+.lightbox img{max-width:90vw;max-height:90vh;border-radius:var(--radius-md)}
+
+/* ---------- TOAST ---------- */
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(120px);background:var(--color-bg-black);color:#fff;padding:12px 18px;border-radius:var(--radius-pill);font-size:var(--text-sm);z-index:90;transition:transform .25s ease;max-width:90vw}
+.toast.show{transform:translateX(-50%) translateY(0)}
+.toast.err{background:var(--color-danger)}
+.toast.ok{background:var(--color-success)}
+
+/* ---------- SETTINGS MODAL ---------- */
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.4);display:none;place-items:center;z-index:100;padding:20px}
+.modal.show{display:grid}
+.modal .box{background:#fff;border-radius:var(--radius-lg);padding:var(--space-6);max-width:540px;width:100%;box-shadow:var(--shadow-panel)}
+.modal h2{font-family:var(--font-display);text-transform:uppercase;font-size:var(--text-xl)}
+.modal label{display:block;font-size:var(--text-sm);font-weight:600;margin:var(--space-4) 0 6px}
+.modal input{width:100%;border:1px solid var(--color-border);border-radius:var(--radius-sm);padding:10px 12px;font-size:var(--text-sm);font-family:inherit}
+.modal .muted{font-size:var(--text-xs);color:var(--color-text-secondary);margin-top:6px}
+.modal .actions{display:flex;gap:10px;justify-content:flex-end;margin-top:var(--space-6)}
+
+/* ---------- SURAT JALAN FORM ---------- */
+.sjpanel{background:var(--color-bg-dark);color:#fff;border-radius:var(--radius-lg);box-shadow:var(--shadow-panel);padding:var(--space-6);margin-top:var(--space-4)}
+.sjpanel .sjhead{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:var(--space-4)}
+.sjpanel .sjno{font-family:var(--font-display);font-size:var(--text-lg);letter-spacing:.5px}
+.fieldgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:var(--space-3);margin-bottom:var(--space-4)}
+.fieldgrid label{font-size:var(--text-xs);display:block;margin-bottom:4px;color:rgba(255,255,255,.8)}
+.fieldgrid input,.fieldgrid select,.sjitem input,.sjitem select{width:100%;border:1px solid rgba(255,255,255,.25);background:rgba(255,255,255,.1);color:#fff;border-radius:var(--radius-sm);padding:9px 10px;font-size:var(--text-sm);font-family:inherit}
+.fieldgrid select option,.sjitem select option{color:#111}
+.sjitem{background:rgba(255,255,255,.12);border-radius:var(--radius-md);padding:var(--space-3);margin-bottom:var(--space-2);display:grid;grid-template-columns:1fr 1.6fr .7fr .7fr 34px;gap:8px;align-items:end}
+@media(max-width:640px){.sjitem{grid-template-columns:1fr 1fr}}
+.sjitem .rm{border:none;background:rgba(255,255,255,.15);color:#fff;border-radius:var(--radius-sm);height:38px;font-size:16px}
+.addbtn{width:100%;border:1px dashed rgba(255,255,255,.4);background:transparent;color:#fff;border-radius:var(--radius-md);padding:12px;font-weight:600;margin-bottom:var(--space-4)}
+.sjfoot{border-top:1px solid rgba(255,255,255,.2);padding-top:var(--space-4);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px}
+.sjtotal{font-size:var(--text-lg)}.sjtotal b{font-family:var(--font-display);font-size:var(--text-xl)}
+.btn-submit{background:#fff;color:var(--color-brand-primary);border:none;padding:12px 22px;border-radius:var(--radius-pill);font-weight:700;font-size:var(--text-sm)}
+.riwayat-item{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:10px 12px;border-bottom:1px solid var(--color-border);font-size:var(--text-sm)}
+.muted{color:var(--color-text-secondary)}
+.hidden{display:none!important}
+
+/* =========================================================
+   PRINT — SURAT JALAN (A4 portrait, hitam-putih)
+   ========================================================= */
+#printDoc{display:none}
+@media print{
+  @page{size:A4 portrait;margin:15mm}
+  body{background:#fff;color:#000;font-size:10.5pt;font-family:var(--font-serif)}
+  /* sembunyikan SEMUA dashboard */
+  .topbar,.navwrap,.wrap,.drawer,.scrim,.lightbox,.toast,.modal{display:none!important}
+  #printDoc{display:block!important}
+  .pd-head{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid #000;padding-bottom:8px;margin-bottom:10px}
+  .pd-logo{font-family:var(--font-display);font-weight:700;font-size:16pt}
+  .pd-title{text-align:right}.pd-title .t{font-family:var(--font-display);font-size:18pt;font-weight:700}
+  .pd-meta{margin:10px 0;line-height:1.7}
+  .pd-meta .row{display:flex}.pd-meta .k{width:90px}.pd-meta .k::after{content:':'}
+  table.pd-table{width:100%;border-collapse:collapse;margin-top:8px}
+  table.pd-table th,table.pd-table td{border:1px solid #000;padding:5px 7px;font-size:10pt}
+  table.pd-table thead{display:table-header-group}
+  table.pd-table tr{break-inside:avoid}
+  table.pd-table th.num,table.pd-table td.num{text-align:right}
+  .pd-total{text-align:right;font-weight:700;margin-top:8px;font-size:11pt}
+  .pd-note{margin-top:14px;min-height:40px}
+  .pd-sign{display:flex;justify-content:space-between;margin-top:36px;break-inside:avoid}
+  .pd-sign div{width:45%;text-align:center}
+  .pd-sign .line{margin-top:48px;border-top:1px solid #000;padding-top:4px;font-size:9pt}
+  .pd-foot{margin-top:10px;font-size:8pt;text-align:center;color:#000}
+}
+</style>
+</head>
+<body>
+
+<!-- ===================== TOPBAR ===================== -->
+<header class="topbar">
+  <div class="topbar-inner">
+    <div class="logo">
+      <span class="mark">GSS</span>
+      <div>GSS STOCK<br><small>Entertainment × Musica</small></div>
+    </div>
+    <div class="topbar-right">
+      <span class="stale-badge">⚠ Data mungkin usang</span>
+      <span class="updated" id="updated">Belum dimuat</span>
+      <button class="btn" id="btnSettings" title="Pengaturan URL">⚙</button>
+      <button class="btn btn-primary" id="btnRefresh"><span class="spinner"></span><span class="lbl">↻ Refresh</span></button>
+    </div>
+  </div>
+</header>
+
+<div class="navwrap">
+  <nav class="nav" id="nav">
+    <button data-tab="overview" class="active">Overview</button>
+    <button data-tab="band">Per Band</button>
+    <button data-tab="gudang">Per Gudang</button>
+    <button data-tab="musica">Musica Catalog</button>
+    <button data-tab="so7">SO7 Stock Flow</button>
+    <button data-tab="suratjalan">Surat Jalan</button>
+  </nav>
+</div>
+
+<main class="wrap">
+  <div id="globalBanner"></div>
+
+  <section id="tab-overview" class="tab"></section>
+  <section id="tab-band" class="tab hidden"></section>
+  <section id="tab-gudang" class="tab hidden"></section>
+  <section id="tab-musica" class="tab hidden"></section>
+  <section id="tab-so7" class="tab hidden"></section>
+  <section id="tab-suratjalan" class="tab hidden"></section>
+</main>
+
+<!-- ===================== DRAWER (detail SKU) ===================== -->
+<div class="scrim" id="scrim"></div>
+<aside class="drawer" id="drawer">
+  <div class="dhead">
+    <h3 id="drawerTitle" style="font-family:var(--font-display);text-transform:uppercase"></h3>
+    <button class="closex" id="drawerClose">×</button>
+  </div>
+  <div class="dbody" id="drawerBody"></div>
+</aside>
+
+<!-- ===================== LIGHTBOX ===================== -->
+<div class="lightbox" id="lightbox"><img id="lightboxImg" alt=""></div>
+
+<!-- ===================== SETTINGS MODAL ===================== -->
+<div class="modal" id="modal">
+  <div class="box">
+    <h2>Pengaturan</h2>
+    <label for="urlInput">URL Web App (Apps Script)</label>
+    <input id="urlInput" placeholder="https://script.google.com/macros/s/..../exec" />
+    <p class="muted">Tempel URL hasil deploy Apps Script (lihat DEPLOY.md). Disimpan di browser ini saja (localStorage). Kosongkan untuk memakai mode demo.</p>
+    <div class="actions">
+      <button class="btn" id="modalDemo">Pakai mode demo</button>
+      <button class="btn" id="modalCancel">Batal</button>
+      <button class="btn btn-primary" id="modalSave">Simpan &amp; Muat</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== PRINT DOC ===================== -->
+<div id="printDoc"></div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* =========================================================
+   KONFIGURASI
+   ========================================================= */
+const CONFIG = {
+  FILE_A:'1vydlRzKyzk9xuA2dV_W7dUuzoZaoCtoqlEoclnCom0k', SHEET_A:'ALL GUDANG',
+  FILE_B:'1LNabYygxDqoVTLOj1juZBvhkEFarvJLyxCES02PFxs8', // sheet auto-detect
+  FILE_C:'1lmU1_xtqUfMphJJeVeVbmbOeqqnISCBJK5VvK66egnQ',
+  SHEET_C_BULK:'ANTARA SUARA UPDATED', SHEET_C_LILO:'STOCK OPNAME LILO',
+  SHEET_C_REF:'REFERENSI PRODUK', SHEET_LOG:'Riwayat Surat Jalan',
+  // >>> AMBANG STOK KRITIS (dikonfirmasi user: 1-3 = kritis). Ubah di sini kalau perlu per kategori. <<<
+  CRITICAL_MAX:3
+};
+const LS_URL='gss_appscript_url';
+let APPS_URL = localStorage.getItem(LS_URL) || '';
+let DEMO = !APPS_URL;
+
+/* state global hasil parsing */
+const STATE = {
+  lilo:[],        // produk File A (ready-to-sell di Lilo)
+  musica:[],      // produk File B
+  bulk:[],        // merch type Antara Suara (File C)
+  liloSO7:[],     // STOCK OPNAME LILO (File C)
+  referensi:{},   // map nama->{sku,harga,img}
+  warnings:[],    // flag untuk UI
+  lastUpdate:null,
+  filterBand:null // drill-down
+};
+
+/* =========================================================
+   UTIL
+   ========================================================= */
+const $=(s,r=document)=>r.querySelector(s);
+const $$=(s,r=document)=>[...r.querySelectorAll(s)];
+function num(v){ if(v==null)return 0; if(typeof v==='number')return v; const s=(''+v).replace(/[^\d]/g,''); const n=parseInt(s,10); return isNaN(n)?0:n; }
+function rupiah(n){ return 'Rp'+ (n||0).toLocaleString('id-ID'); }
+function fmt(n){ return (n||0).toLocaleString('id-ID'); }
+function esc(s){ return (''+(s==null?'':s)).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+function initials(name){ const w=(name||'?').trim().split(/\s+/); return ((w[0]||'')[0]||'')+((w[1]||'')[0]||'').toUpperCase(); }
+function bandFromJudul(j){ // File A: teks sebelum " - " atau sebelum "["
+  if(!j) return '(tanpa nama)';
+  let t=j.split(' - ')[0]; t=t.split('[')[0]; return t.trim()||j.trim();
+}
+function artistFromNama(n){ return (n||'').split('-')[0].trim()||'(lain)'; }
+
+/* status stok dari array size [s,m,l,xl,xxl] */
+function sizeStatus(sizes){
+  const core=[sizes[0],sizes[1],sizes[2]]; // S,M,L = size inti
+  let zeroRun=0,maxRun=0; sizes.forEach(q=>{ if(q===0){zeroRun++;maxRun=Math.max(maxRun,zeroRun);}else zeroRun=0; });
+  if(core.some(q=>q===0)) return {cls:'warn',txt:'⚠ Core size habis'};
+  if(maxRun>=2) return {cls:'warn',txt:'⚠ Size run patah'};
+  return {cls:'ok',txt:'✓ Sehat'};
+}
+function cellClass(q){ if(q===0)return 'cell q0'; if(q>=1&&q<=CONFIG.CRITICAL_MAX)return 'cell qlow'; return 'cell'; }
+/* render 5 sel size; produk all-size (allsize>0 & semua size 0) tidak diwarnai merah */
+function sizeCells(sizes,allsize){
+  const isAll = (allsize||0)>0 && sizes.every(q=>q===0);
+  return sizes.map(q=> isAll
+    ? `<td class="cell muted" style="text-align:center">·</td>`
+    : `<td class="${cellClass(q)}">${q||''}</td>`).join('');
+}
+
+/* =========================================================
+   DATA LAYER — JSONP (baca) + fetch POST (tulis)
+   ========================================================= */
+let cbSeq=0;
+function jsonp(params){
+  return new Promise((resolve,reject)=>{
+    if(!APPS_URL) return reject(new Error('URL Apps Script belum diatur'));
+    const cb='__gss_cb'+(cbSeq++);
+    const script=document.createElement('script');
+    const timer=setTimeout(()=>{cleanup();reject(new Error('Timeout — server lambat / tidak merespons'));},30000);
+    function cleanup(){clearTimeout(timer);delete window[cb];script.remove();}
+    window[cb]=(data)=>{cleanup();resolve(data);};
+    const qs=new URLSearchParams(Object.assign({},params,{callback:cb})).toString();
+    script.src=APPS_URL+'?'+qs;
+    script.onerror=()=>{cleanup();reject(new Error('Gagal terhubung ke Apps Script'));};
+    document.body.appendChild(script);
+  });
+}
+async function fetchSheet(fileId,sheetName){
+  const d=await jsonp(sheetName?{id:fileId,sheet:sheetName}:{id:fileId});
+  if(!d.ok) throw new Error(d.error||'Gagal membaca sheet');
+  return d;
+}
+
+/* =========================================================
+   PARSER
+   ========================================================= */
+function headerIndex(row,contains){ // cari index kolom yg headernya mengandung teks
+  const up=row.map(c=>(''+(c||'')).trim().toUpperCase());
+  return up.findIndex(h=>h.includes(contains.toUpperCase()));
+}
+function findHeaderRow(rows,musts){
+  for(let r=0;r<Math.min(rows.length,5);r++){
+    if(musts.every(m=>headerIndex(rows[r],m)>=0)) return r;
+  } return 0;
+}
+function extractImageUrl(formula){
+  if(!formula) return ''; const m=/=IMAGE\(\s*"([^"]+)"/i.exec(formula); return m?m[1]:'';
+}
+
+/* ---- File A: ALL GUDANG ---- */
+function parseFileA(rows,formulas){
+  if(!rows.length) return [];
+  const hr=findHeaderRow(rows,['JUDUL','SIZE']);
+  const H=rows[hr];
+  const cJ=headerIndex(H,'JUDUL'), cHarga=headerIndex(H,'HARGA'), cVendor=headerIndex(H,'VENDOR'),
+        cSize=headerIndex(H,'SIZE'), cSku=headerIndex(H,'SKU'), cLilo=headerIndex(H,'LILO'),
+        cTotal=headerIndex(H,'TOTAL'), cImg=headerIndex(H,'GAMBAR'), cNo=headerIndex(H,'NO');
+  const prods=[]; let cur=null;
+  for(let r=hr+1;r<rows.length;r++){
+    const row=rows[r];
+    const judul=(row[cJ]||'').trim();
+    const size=(cSize>=0?row[cSize]:'').trim();
+    const sku=(cSku>=0?row[cSku]:'').trim();
+    const blank=row.every(c=>!(''+(c||'')).trim());
+    if(blank){ cur=null; continue; }
+    if(judul){ // baris pertama grup
+      let img='';
+      if(cImg>=0 && formulas[r]) img=extractImageUrl(formulas[r][cImg]);
+      cur={ judul, band:bandFromJudul(judul), vendor:(cVendor>=0?row[cVendor]:'').trim(),
+            harga:num(cHarga>=0?row[cHarga]:0), total:num(cTotal>=0?row[cTotal]:0),
+            img, sizes:[] };
+      prods.push(cur);
+    }
+    if(!cur) continue;
+    if(size||sku){ cur.sizes.push({ size:size||'-', sku, lilo:num(cLilo>=0?row[cLilo]:0) }); }
+  }
+  return prods;
+}
+
+/* ---- File B: Musica ---- */
+function parseFileB(rows){
+  if(!rows.length) return [];
+  const hr=findHeaderRow(rows,['SKU','STOCK']);
+  const H=rows[hr];
+  const cSku=headerIndex(H,'SKU'), cNama=headerIndex(H,'NAMA'), cStock=headerIndex(H,'STOCK'), cHarga=headerIndex(H,'HARGA');
+  const out=[];
+  for(let r=hr+1;r<rows.length;r++){
+    const row=rows[r]; const sku=(row[cSku]||'').trim(); const nama=(row[cNama]||'').trim();
+    if(!sku&&!nama) continue;
+    out.push({ sku, nama, artist:artistFromNama(nama), stock:num(row[cStock]), harga:num(cHarga>=0?row[cHarga]:0) });
+  }
+  return out;
+}
+
+/* ---- File C: ANTARA SUARA UPDATED (bulk) ---- */
+function parseBulk(rows){
+  if(!rows.length) return [];
+  const hr=findHeaderRow(rows,['MERCH TYPE','SUBTOTAL']);
+  const H=rows[hr];
+  const cMerch=headerIndex(H,'MERCH TYPE'), cS=headerIndex(H,'S'), cKoli=headerIndex(H,'KOLI');
+  // kolom S..XXL berurutan setelah MERCH TYPE; cari eksplisit
+  const idx={}; ['S','M','L','XL','XXL','ALL SIZE'].forEach(k=>{ idx[k]=H.findIndex(h=>(''+(h||'')).trim().toUpperCase()===k); });
+  const cSub=H.findIndex(h=>(''+(h||'')).trim().toUpperCase()==='SUBTOTAL'); // SUBTOTAL pertama
+  const map={};
+  for(let r=hr+1;r<rows.length;r++){
+    const row=rows[r]; const merch=(row[cMerch]||'').trim(); const koli=(row[cKoli]||'').trim();
+    if(!merch && !koli) continue;      // baris TOTAL di bawah -> skip
+    if(!merch) continue;
+    if(!map[merch]) map[merch]={ merch, sizes:[0,0,0,0,0], allsize:0, total:0 };
+    const m=map[merch];
+    ['S','M','L','XL','XXL'].forEach((k,i)=>{ if(idx[k]>=0) m.sizes[i]+=num(row[idx[k]]); });
+    if(idx['ALL SIZE']>=0) m.allsize+=num(row[idx['ALL SIZE']]);
+    m.total+=num(cSub>=0?row[cSub]:0);
+  }
+  return Object.values(map);
+}
+
+/* ---- File C: STOCK OPNAME LILO (ready-to-sell) ---- */
+function parseLiloSO7(rows){
+  if(!rows.length) return [];
+  const hr=findHeaderRow(rows,['PRODUK','LILO']);
+  const H=rows[hr];
+  const cP=headerIndex(H,'PRODUK'), cSize=headerIndex(H,'SIZE'), cLilo=headerIndex(H,'LILO');
+  const map={}; let curName='';
+  for(let r=hr+1;r<rows.length;r++){
+    const row=rows[r]; let p=(row[cP]||'').trim();
+    const size=(cSize>=0?row[cSize]:'').trim(); const q=num(cLilo>=0?row[cLilo]:0);
+    if(p) curName=p; else p=curName; // forward-fill merge
+    if(!p) continue;
+    if(/total/i.test(p)) continue; // baris TOTAL -> skip (cross-check manual)
+    if(!map[p]) map[p]={ produk:p, rows:[], total:0 };
+    map[p].rows.push({size:size||'-',qty:q}); map[p].total+=q;
+  }
+  return Object.values(map);
+}
+
+/* ---- File C: REFERENSI PRODUK ---- */
+function parseReferensi(rows){
+  const map={}; if(!rows.length) return map;
+  const hr=findHeaderRow(rows,['PRODUK','HARGA']);
+  const H=rows[hr];
+  const cP=headerIndex(H,'PRODUK'), cSku=headerIndex(H,'SKU'), cHarga=headerIndex(H,'HARGA'), cImg=headerIndex(H,'GAMBAR'||'URL');
+  const cImg2=cImg>=0?cImg:headerIndex(H,'URL');
+  for(let r=hr+1;r<rows.length;r++){
+    const row=rows[r]; const p=(row[cP]||'').trim(); if(!p) continue;
+    const hargaRaw=(cHarga>=0?row[cHarga]:'').toString().trim();
+    map[p.toUpperCase()]={ produk:p, sku:(cSku>=0?row[cSku]:'').trim(),
+      harga: hargaRaw? num(hargaRaw): null, img:(cImg2>=0?row[cImg2]:'').trim() };
+  }
+  return map;
+}
+
+/* =========================================================
+   LOAD (refresh) — hanya saat buka halaman & klik Refresh
+   ========================================================= */
+async function loadAll(){
+  const btn=$('#btnRefresh'); btn.classList.add('loading'); btn.disabled=true;
+  document.body.classList.remove('stale');
+  try{
+    STATE.warnings=[];
+    if(DEMO){ loadDemo(); }
+    else{
+      // auto-deteksi sheet Musica (ambil sheet pertama)
+      const listB=await jsonp({id:CONFIG.FILE_B});
+      const sheetB=(listB.ok&&listB.sheets&&listB.sheets[0])||null;
+
+      const [A,B,bulk,lilo,ref]=await Promise.all([
+        fetchSheet(CONFIG.FILE_A,CONFIG.SHEET_A).catch(e=>({_err:e.message})),
+        sheetB?fetchSheet(CONFIG.FILE_B,sheetB).catch(e=>({_err:e.message})):Promise.resolve({_err:'Sheet Musica tidak terdeteksi'}),
+        fetchSheet(CONFIG.FILE_C,CONFIG.SHEET_C_BULK).catch(e=>({_err:e.message})),
+        fetchSheet(CONFIG.FILE_C,CONFIG.SHEET_C_LILO).catch(e=>({_err:e.message})),
+        fetchSheet(CONFIG.FILE_C,CONFIG.SHEET_C_REF).catch(e=>({_err:e.message}))
+      ]);
+      STATE.lilo    = A._err?[]:parseFileA(A.rows,A.formulas);
+      STATE.musica  = B._err?[]:parseFileB(B.rows);
+      STATE.bulk    = bulk._err?[]:parseBulk(bulk.rows);
+      STATE.liloSO7 = lilo._err?[]:parseLiloSO7(lilo.rows);
+      STATE.referensi = ref._err?{}:parseReferensi(ref.rows);
+      [['Katalog Lilo (File A)',A],['Musica (File B)',B],['Bulk Antara Suara',bulk],['Stock Opname Lilo',lilo]]
+        .forEach(([n,d])=>{ if(d._err) STATE.warnings.push(n+': '+d._err); });
+      if(ref._err) STATE.warnings.push('Tab REFERENSI PRODUK belum ada / tidak terbaca — nilai stok SO7 belum bisa dihitung. Jalankan setupReferensiProduk() di Apps Script.');
+      STATE.lastUpdate=new Date();
+    }
+    detectConflicts();
+    renderAll();
+    const t=STATE.lastUpdate||new Date();
+    $('#updated').innerHTML='Terakhir diperbarui: <b>'+t.toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'})+'</b>'+(DEMO?' · mode demo':'');
+  }catch(err){
+    document.body.classList.add('stale');
+    $('#updated').innerHTML='<b style="color:var(--color-danger)">Gagal memuat</b>';
+    showGlobalError(err.message);
+  }finally{
+    btn.classList.remove('loading'); btn.disabled=false;
+  }
+}
+
+function showGlobalError(msg){
+  $('#globalBanner').innerHTML=
+   '<div class="banner err"><span>✕</span><div><b>Gagal memuat data.</b> '+esc(msg)+
+   '<br>Kemungkinan: URL Apps Script salah, belum di-deploy sebagai “Anyone”, atau koneksi putus. '+
+   'Angka yang tampil di bawah (jika ada) berasal dari muat sebelumnya dan <b>mungkin sudah usang</b>.</div></div>';
+}
+
+/* konflik SKU sama beda angka antar sheet ber-SKU (File A vs Musica) */
+function detectConflicts(){
+  const seen={};
+  const add=(sku,stock,src)=>{ if(!sku)return; const k=sku.toUpperCase();
+    if(seen[k] && seen[k].stock!==stock){ STATE.warnings.push('SKU '+sku+' muncul di 2 sumber dgn angka beda ('+seen[k].src+'='+seen[k].stock+' vs '+src+'='+stock+') — mohon dicek.'); }
+    else if(!seen[k]) seen[k]={stock,src}; };
+  STATE.lilo.forEach(p=>p.sizes.forEach(s=>add(s.sku,s.lilo,'Lilo/File A')));
+  STATE.musica.forEach(m=>add(m.sku,m.stock,'Musica'));
+}
+
+/* =========================================================
+   AGGREGATES
+   ========================================================= */
+function bandAgg(){ // gabung GSS (File A) + Musica
+  const map={};
+  STATE.lilo.forEach(p=>{ const b=p.band; const q=p.sizes.reduce((a,s)=>a+s.lilo,0);
+    if(!map[b])map[b]={band:b,src:'GSS (Lilo)',qty:0}; map[b].qty+=q; });
+  STATE.musica.forEach(m=>{ const b=m.artist; if(!map[b])map[b]={band:b,src:'Musica',qty:0}; map[b].qty+=m.stock; });
+  return Object.values(map).sort((a,b)=>b.qty-a.qty);
+}
+function totalLiloUnits(){ return STATE.lilo.reduce((a,p)=>a+p.sizes.reduce((x,s)=>x+s.lilo,0),0); }
+function totalMusicaUnits(){ return STATE.musica.reduce((a,m)=>a+m.stock,0); }
+function totalSO7LiloUnits(){ return STATE.liloSO7.reduce((a,p)=>a+p.total,0); }
+function totalBulkUnits(){ return STATE.bulk.reduce((a,b)=>a+b.total,0); }
+function countSKU(){ return STATE.lilo.reduce((a,p)=>a+p.sizes.filter(s=>s.sku).length,0)+STATE.musica.length; }
+
+/* status SKU (habis/kritis/aman) per gudang utk bar chart */
+function statusCounts(items){ // items: array qty
+  let habis=0,kritis=0,aman=0;
+  items.forEach(q=>{ if(q<=0)habis++; else if(q<=CONFIG.CRITICAL_MAX)kritis++; else aman++; });
+  return {habis,kritis,aman,total:items.length};
+}
+
+/* =========================================================
+   RENDER ROUTER
+   ========================================================= */
+function renderAll(){
+  renderBanner();
+  renderOverview();
+  renderBand();
+  renderGudang();
+  renderMusica();
+  renderSO7();
+  renderSuratJalan();
+}
+function renderBanner(){
+  let h='';
+  if(DEMO) h+='<div class="banner demo"><span>▶</span><div><b>Mode demo.</b> Ini data contoh dari sheet Anda. Klik ⚙ lalu masukkan URL Apps Script untuk data live.</div></div>';
+  if(STATE.warnings.length){
+    h+='<div class="banner warn"><span>⚠</span><div><b>'+STATE.warnings.length+' catatan/flag:</b><ul style="margin:6px 0 0;padding-left:18px">'+
+       STATE.warnings.slice(0,8).map(w=>'<li>'+esc(w)+'</li>').join('')+'</ul></div></div>';
+  }
+  $('#globalBanner').innerHTML=h;
+}
+
+/* ---------- OVERVIEW ---------- */
+function renderOverview(){
+  const bands=bandAgg();
+  const liloU=totalLiloUnits(), musU=totalMusicaUnits(), so7U=totalSO7LiloUnits();
+  const readyTotal=liloU+musU+so7U, bulkU=totalBulkUnits();
+  const kpis=[
+    {ico:'📦',bg:'#E3F3EB',col:'var(--color-success)',lbl:'Stok siap jual (ready-to-sell)',val:fmt(readyTotal),hint:'Lilo GSS '+fmt(liloU)+' + Musica '+fmt(musU)+' + SO7 Lilo '+fmt(so7U)},
+    {ico:'🏭',bg:'#EFE7DA',col:'var(--color-bg-dark)',lbl:'Stok bulk (cadangan)',val:fmt(bulkU),hint:'Antara Suara — TIDAK dijumlah dgn ready-to-sell'},
+    {ico:'🎤',bg:'#E7ECFB',col:'var(--color-accent-blue)',lbl:'Jumlah band/artis',val:fmt(bands.length),hint:'GSS + Musica'},
+    {ico:'🏷️',bg:'var(--color-brand-primary-subtle)',col:'var(--color-brand-primary)',lbl:'Jumlah SKU',val:fmt(countSKU()),hint:'varian size terhitung'}
+  ];
+  const top=bands.slice(0,15); const max=Math.max(1,...top.map(b=>b.qty));
+  // status per gudang (SKU count)
+  const liloQ=[]; STATE.lilo.forEach(p=>p.sizes.forEach(s=>{ if(s.sku)liloQ.push(s.lilo); })); STATE.musica.forEach(m=>liloQ.push(m.stock));
+  const bulkQ=[]; STATE.bulk.forEach(b=>b.sizes.forEach(q=>{ if(q>0||true)bulkQ.push(q); })); // size cells
+  const sLilo=statusCounts(liloQ), sBulk=statusCounts(STATE.bulk.map(b=>b.total));
+
+  $('#tab-overview').innerHTML=`
+    <h2 class="section-title">Overview</h2>
+    <p class="section-sub">Ringkasan stok seluruh gudang. Ready-to-sell &amp; bulk sengaja dipisah — jangan dijumlahkan.</p>
+    <div class="kpi-grid">${kpis.map(k=>`
+      <div class="kpi"><div class="ico" style="background:${k.bg};color:${k.col}">${k.ico}</div>
+        <div class="lbl">${k.lbl}</div><div class="val">${k.val}</div><div class="hint">${k.hint}</div></div>`).join('')}
+    </div>
+    <div class="split">
+      <div class="card"><h3>Top 15 band — stok ready-to-sell (unit). Klik untuk lihat per band.</h3>
+        ${top.map(b=>`<div class="barrow clickable" data-band="${esc(b.band)}">
+          <span class="name" title="${esc(b.band)}">${esc(b.band)}</span>
+          <span class="bartrack"><span class="barfill" style="width:${Math.max(2,b.qty/max*100)}%"></span></span>
+          <span class="num">${fmt(b.qty)}</span></div>`).join('')||'<p class="muted">Belum ada data.</p>'}
+      </div>
+      <div class="card"><h3>Status stok per gudang (jumlah SKU/baris)</h3>
+        ${gudStatusBar('Lilo (fulfillment)',sLilo)}
+        ${gudStatusBar('Antara Suara (bulk, per merch type)',sBulk)}
+        <div class="gudrow"><div class="gname"><span>FAM</span><span class="muted">belum tersedia</span></div>
+          <div class="stacked"><span style="width:100%;background:var(--color-border)"></span></div></div>
+        <div class="legend"><span><i style="background:var(--color-danger)"></i>Habis (0)</span>
+          <span><i style="background:var(--color-warning)"></i>Kritis (1–${CONFIG.CRITICAL_MAX})</span>
+          <span><i style="background:var(--color-success)"></i>Aman (&gt;${CONFIG.CRITICAL_MAX})</span></div>
+      </div>
+    </div>`;
+  $$('#tab-overview .barrow.clickable').forEach(el=>el.onclick=()=>{ STATE.filterBand=el.dataset.band; switchTab('band'); });
+}
+function gudStatusBar(name,s){
+  const tot=Math.max(1,s.total);
+  return `<div class="gudrow"><div class="gname"><span>${esc(name)}</span>
+    <span class="muted">Habis ${s.habis} · Kritis ${s.kritis} · Aman ${s.aman}</span></div>
+    <div class="stacked">
+      <span style="width:${s.habis/tot*100}%;background:var(--color-danger)"></span>
+      <span style="width:${s.kritis/tot*100}%;background:var(--color-warning)"></span>
+      <span style="width:${s.aman/tot*100}%;background:var(--color-success)"></span>
+    </div></div>`;
+}
+
+/* ---------- PER BAND ---------- */
+function renderBand(){
+  const bands=bandAgg();
+  const chips = STATE.filterBand? `<div class="chips"><span class="chip">${esc(STATE.filterBand)} <button onclick="clearBandFilter()">✕</button></span></div>`:'';
+  const rowsHtml=bands.filter(b=>!STATE.filterBand||b.band===STATE.filterBand).map(b=>`
+     <tr class="master" data-band="${esc(b.band)}">
+       <td class="prodcell"><b>${esc(b.band)}</b></td>
+       <td><span class="badge src">${esc(b.src)}</span></td>
+       <td class="num">${fmt(b.qty)}</td></tr>`).join('');
+  $('#tab-band').innerHTML=`
+    <h2 class="section-title">Per Band</h2>
+    <p class="section-sub">Semua band/artis (GSS + Musica) beserta total qty ready-to-sell.</p>
+    <div class="card">
+      <div class="toolbar"><input class="search" id="bandSearch" placeholder="Cari band/artis…">${chips}</div>
+      <div class="tablewrap"><table><thead><tr><th>Band / Artis</th><th>Sumber</th><th class="num">Total qty</th></tr></thead>
+        <tbody id="bandBody">${rowsHtml}</tbody></table></div>
+    </div>`;
+  $('#bandSearch').oninput=e=>{ const q=e.target.value.toLowerCase();
+    $$('#bandBody tr').forEach(tr=>tr.style.display=tr.dataset.band.toLowerCase().includes(q)?'':'none'); };
+  $$('#bandBody tr').forEach(tr=>tr.onclick=()=>{ STATE.filterBand=tr.dataset.band; switchTab('gudang'); });
+}
+function clearBandFilter(){ STATE.filterBand=null; renderBand(); }
+
+/* ---------- PER GUDANG ---------- */
+function renderGudang(){
+  const chips = STATE.filterBand? `<div class="chips"><span class="chip">${esc(STATE.filterBand)} <button onclick="clearGudangFilter()">✕</button></span></div>`:'';
+  const liloProds=STATE.lilo.filter(p=>!STATE.filterBand||p.band===STATE.filterBand);
+  $('#tab-gudang').innerHTML=`
+    <h2 class="section-title">Per Gudang</h2>
+    <p class="section-sub">Kiri: Lilo (ready-to-sell, per size). Kanan: Antara Suara (bulk, per merch type). ${chips}</p>
+    <div class="split">
+      <div class="card"><h3>Lilo — ready-to-sell (klik baris untuk size detail)</h3>
+        <div class="tablewrap"><table><thead><tr><th></th><th>Produk</th><th class="num">Harga</th><th class="num">Total</th><th>Status</th></tr></thead>
+        <tbody id="liloBody"></tbody></table></div></div>
+      <div class="card"><h3>Antara Suara — bulk (per merch type)</h3>
+        <div class="tablewrap"><table class="smx"><thead><tr><th>Merch type</th><th class="num">S</th><th class="num">M</th><th class="num">L</th><th class="num">XL</th><th class="num">XXL</th><th class="num">Mix</th><th class="num">Total</th></tr></thead>
+        <tbody>${STATE.bulk.map(b=>`<tr><td>${esc(b.merch)}</td>
+          ${sizeCells(b.sizes,b.allsize)}
+          <td class="cell">${b.allsize||''}</td><td class="num"><b>${fmt(b.total)}</b></td></tr>`).join('')||'<tr><td colspan="8" class="muted">Belum ada data.</td></tr>'}</tbody></table></div></div>
+    </div>`;
+  renderLiloRows(liloProds);
+}
+function clearGudangFilter(){ STATE.filterBand=null; renderGudang(); }
+function renderLiloRows(prods){
+  const body=$('#liloBody'); if(!body) return;
+  body.innerHTML=prods.map((p,i)=>{
+    const sizes5=['S','M','L','XL','XXL'].map(sz=>{ const f=p.sizes.find(s=>s.size.toUpperCase()===sz); return f?f.lilo:(p.sizes.length<=1?0:0); });
+    const hasSize5=p.sizes.some(s=>['S','M','L','XL','XXL'].includes(s.size.toUpperCase()));
+    const st = hasSize5? sizeStatus(sizes5) : {cls:'ok',txt:'—'};
+    const total=p.sizes.reduce((a,s)=>a+s.lilo,0);
+    const thumb=p.img?`<img class="thumb" loading="lazy" src="${esc(p.img)}" alt="" onerror="this.outerHTML='<div class=ph>${esc(initials(p.band))}</div>'">`:`<div class="ph">${esc(initials(p.band))}</div>`;
+    return `<tr class="master" data-i="${i}"><td><span class="chev">▸</span></td>
+      <td class="prodcell">${thumb}<div><b>${esc(p.judul)}</b><br><span class="muted" style="font-size:var(--text-xs)">${esc(p.band)}</span></div></td>
+      <td class="num">${p.harga?rupiah(p.harga):'<span class="muted">—</span>'}</td>
+      <td class="num"><b>${fmt(total)}</b></td>
+      <td><span class="badge ${st.cls==='ok'?'ok':'warn'}">${st.txt}</span></td></tr>
+      <tr class="detailrow hidden" data-detail="${i}"><td colspan="5"><div class="detailbox">
+        <div class="tablewrap"><table><thead><tr><th>Size</th><th>SKU</th><th class="num">Lilo</th></tr></thead>
+        <tbody>${p.sizes.map(s=>`<tr><td>${esc(s.size)}</td>
+          <td><a href="#" onclick="openSku('${esc(s.sku)}');return false">${esc(s.sku||'-')}</a></td>
+          <td class="${cellClass(s.lilo)}" style="text-align:right">${fmt(s.lilo)}</td></tr>`).join('')}</tbody></table></div>
+        <p class="muted" style="margin-top:8px">Vendor: ${esc(p.vendor||'-')} · Harga: ${p.harga?rupiah(p.harga):'belum diisi'}</p>
+      </div></td></tr>`;
+  }).join('')||'<tr><td colspan="5" class="muted">Tidak ada produk.</td></tr>';
+  // accordion: hanya satu terbuka
+  $$('#liloBody tr.master').forEach(tr=>tr.onclick=()=>{
+    const i=tr.dataset.i; const det=body.querySelector(`tr[data-detail="${i}"]`); const open=!det.classList.contains('hidden');
+    $$('#liloBody tr.detailrow').forEach(d=>d.classList.add('hidden'));
+    $$('#liloBody tr.master').forEach(m=>m.classList.remove('open'));
+    if(!open){ det.classList.remove('hidden'); tr.classList.add('open'); }
+  });
+}
+
+/* ---------- MUSICA CATALOG (pagination 50) ---------- */
+let musPage=0, musQuery='';
+function renderMusica(){
+  $('#tab-musica').innerHTML=`
+    <h2 class="section-title">Musica Catalog</h2>
+    <p class="section-sub">${fmt(STATE.musica.length)} SKU. Tabel dibatasi 50 baris/halaman demi performa.</p>
+    <div class="card">
+      <div class="toolbar"><input class="search" id="musSearch" placeholder="Cari SKU / nama / artis…"></div>
+      <div class="tablewrap"><table><thead><tr><th>Foto</th><th>SKU</th><th>Nama barang</th><th>Artis</th><th class="num">Stock</th><th class="num">Harga retail</th></tr></thead>
+      <tbody id="musBody"></tbody></table></div>
+      <div class="pager" id="musPager"></div>
+    </div>`;
+  $('#musSearch').oninput=e=>{ musQuery=e.target.value.toLowerCase(); musPage=0; paintMusica(); };
+  paintMusica();
+}
+function paintMusica(){
+  const list=STATE.musica.filter(m=>!musQuery|| (m.sku+' '+m.nama+' '+m.artist).toLowerCase().includes(musQuery));
+  const per=50, pages=Math.max(1,Math.ceil(list.length/per)); musPage=Math.min(musPage,pages-1);
+  const slice=list.slice(musPage*per,musPage*per+per);
+  $('#musBody').innerHTML=slice.map(m=>{
+    const ph=`<div class="ph">${esc(initials(m.artist))}</div>`; // Musica tidak punya foto
+    const cls=cellClass(m.stock);
+    return `<tr><td>${ph}</td><td><a href="#" onclick="openSku('${esc(m.sku)}');return false">${esc(m.sku)}</a></td>
+      <td>${esc(m.nama)}</td><td>${esc(m.artist)}</td>
+      <td class="${cls}" style="text-align:right">${fmt(m.stock)}</td>
+      <td class="num">${m.harga?rupiah(m.harga):'<span class="muted">—</span>'}</td></tr>`;
+  }).join('')||'<tr><td colspan="6" class="muted">Tidak ada hasil.</td></tr>';
+  $('#musPager').innerHTML=`<span class="muted">${fmt(list.length)} item · hal ${musPage+1}/${pages}</span>
+    <button ${musPage<=0?'disabled':''} onclick="musPage--;paintMusica()">‹ Sebelumnya</button>
+    <button ${musPage>=pages-1?'disabled':''} onclick="musPage++;paintMusica()">Berikutnya ›</button>`;
+}
+
+/* ---------- SO7 STOCK FLOW ---------- */
+function renderSO7(){
+  const bulkU=totalBulkUnits(), liloU=totalSO7LiloUnits();
+  const refEmpty=Object.keys(STATE.referensi).length===0;
+  // join nama: bulk merch type <-> referensi (harga)
+  const unmatched=[];
+  const bulkRows=STATE.bulk.map(b=>{
+    const ref=STATE.referensi[b.merch.toUpperCase()];
+    if(!ref && !refEmpty) unmatched.push(b.merch);
+    const harga = ref&&ref.harga!=null? ref.harga : null;
+    return {merch:b.merch, total:b.total, sizes:b.sizes, allsize:b.allsize,
+      nilai: harga!=null? harga*b.total : null};
+  });
+  $('#tab-so7').innerHTML=`
+    <h2 class="section-title">SO7 Stock Flow</h2>
+    <p class="section-sub">Sheila On 7 — Tunggu Aku Di Tour. Alur: stok bulk (Antara Suara) → ditarik jadi ready-to-sell (Lilo).</p>
+    <div class="card">
+      <div style="display:flex;align-items:center;gap:20px;flex-wrap:wrap;justify-content:center;padding:10px 0">
+        <div style="text-align:center"><div class="muted">GUDANG BULK · Antara Suara</div>
+          <div style="font-family:var(--font-display);font-size:var(--text-2xl);color:var(--color-bg-dark)">${fmt(bulkU)}</div>
+          <div class="muted">unit cadangan</div></div>
+        <div style="font-size:28px;color:var(--color-brand-primary)">⟶</div>
+        <div style="text-align:center"><div class="muted">GUDANG FULFILLMENT · Lilo</div>
+          <div style="font-family:var(--font-display);font-size:var(--text-2xl);color:var(--color-success)">${fmt(liloU)}</div>
+          <div class="muted">unit siap jual</div></div>
+      </div>
+    </div>
+    ${refEmpty?'<div class="banner info"><span>ℹ</span><div>Tab <b>REFERENSI PRODUK</b> masih kosong — ini normal. Nilai stok belum bisa dihitung, jadi ditampilkan <b>“Harga belum diisi”</b> (bukan Rp0). Isi harga di tab itu lalu klik Refresh.</div></div>':''}
+    ${unmatched.length?`<div class="banner warn"><span>⚠</span><div><b>${unmatched.length} merch type tidak cocok</b> dengan tab REFERENSI PRODUK (luput dari perhitungan nilai): ${unmatched.map(esc).join(', ')}</div></div>`:''}
+    <div class="card"><h3>Breakdown per produk (bulk)</h3>
+      <div class="tablewrap"><table class="smx"><thead><tr><th>Merch type</th><th class="num">S</th><th class="num">M</th><th class="num">L</th><th class="num">XL</th><th class="num">XXL</th><th class="num">Mix</th><th class="num">Total qty</th><th class="num">Nilai stok</th></tr></thead>
+      <tbody>${bulkRows.map(b=>`<tr><td>${esc(b.merch)}</td>
+        ${sizeCells(b.sizes,b.allsize)}
+        <td class="cell">${b.allsize||''}</td><td class="num"><b>${fmt(b.total)}</b></td>
+        <td class="num">${b.nilai!=null?rupiah(b.nilai):'<span class="muted">Harga belum diisi</span>'}</td></tr>`).join('')}</tbody></table></div>
+    </div>
+    <div class="card"><h3>Ready-to-sell di Lilo (stock opname)</h3>
+      ${STATE.liloSO7.length?('<div class="tablewrap"><table><thead><tr><th>Produk</th><th>Rincian size</th><th class="num">Total</th></tr></thead><tbody>'+
+        STATE.liloSO7.map(p=>`<tr><td>${esc(p.produk)}</td><td class="muted">${p.rows.map(r=>esc(r.size)+':'+fmt(r.qty)).join(' · ')}</td><td class="num"><b>${fmt(p.total)}</b></td></tr>`).join('')+
+        '</tbody></table></div>'):'<p class="muted">Data STOCK OPNAME LILO belum termuat.</p>'}
+    </div>`;
+}
+
+/* =========================================================
+   SURAT JALAN (FASE 3)
+   ========================================================= */
+function genNoLokal(){ const d=new Date(); const p=n=>('0'+n).slice(-2);
+  return 'SJ-'+d.getFullYear()+p(d.getMonth()+1)+p(d.getDate())+'-001'; }
+const GUDANG_LIST=['Lilo','Antara Suara','FAM'];
+let riwayatCache=[];
+function renderSuratJalan(){
+  $('#tab-suratjalan').innerHTML=`
+    <h2 class="section-title">Surat Jalan</h2>
+    <p class="section-sub">Catat barang keluar/masuk/pindah gudang. Submit akan menulis ke sheet &amp; memperbarui stok.</p>
+    <div class="sjpanel">
+      <div class="sjhead"><span class="sjno" id="sjNo">${genNoLokal()}</span>
+        <input type="date" id="sjTanggal" style="max-width:170px" value="${new Date().toISOString().slice(0,10)}"></div>
+      <div class="fieldgrid">
+        <div><label>Jenis pergerakan</label><select id="sjJenis">
+          <option>Transfer antar gudang</option><option>Outbound ke customer/reseller</option><option>Inbound dari vendor</option></select></div>
+        <div><label>Gudang asal</label><select id="sjAsal">${GUDANG_LIST.map(g=>`<option>${g}</option>`).join('')}</select></div>
+        <div><label>Gudang tujuan / penerima</label><input id="sjTujuan" placeholder="mis. Lilo / nama reseller"></div>
+        <div><label>Pengirim / penanggung jawab</label><input id="sjPengirim"></div>
+      </div>
+      <div id="sjItems"></div>
+      <button class="addbtn" id="sjAdd">+ Tambah Produk</button>
+      <div><label style="font-size:var(--text-xs);color:rgba(255,255,255,.8)">Catatan</label>
+        <input id="sjCatatan" style="width:100%;border:1px solid rgba(255,255,255,.25);background:rgba(255,255,255,.1);color:#fff;border-radius:var(--radius-sm);padding:9px 10px"></div>
+      <div class="sjfoot"><div class="sjtotal">Total qty <b id="sjTotal">0</b></div>
+        <button class="btn-submit" id="sjSubmit">Simpan Surat Jalan</button></div>
+    </div>
+    <div class="card"><h3>Riwayat surat jalan (klik untuk cetak ulang)</h3><div id="riwayatList"><p class="muted">Memuat…</p></div></div>`;
+  addSjItem();
+  $('#sjAdd').onclick=addSjItem;
+  $('#sjSubmit').onclick=submitSuratJalan;
+  loadRiwayat();
+}
+function addSjItem(){
+  const div=document.createElement('div'); div.className='sjitem';
+  div.innerHTML=`<div><label>SKU</label><input class="i-sku" placeholder="SKU"></div>
+    <div><label>Nama produk</label><input class="i-nama" placeholder="Nama"></div>
+    <div><label>Size</label><input class="i-size" placeholder="M"></div>
+    <div><label>Qty</label><input class="i-qty" type="number" min="1" value="1"></div>
+    <button class="rm" title="Hapus">×</button>`;
+  div.querySelector('.rm').onclick=()=>{ div.remove(); recalcSj(); };
+  div.querySelector('.i-qty').oninput=recalcSj;
+  $('#sjItems').appendChild(div); recalcSj();
+}
+function recalcSj(){ let t=0; $$('#sjItems .i-qty').forEach(q=>t+=num(q.value)); $('#sjTotal').textContent=fmt(t); }
+function collectItems(){
+  return $$('#sjItems .sjitem').map(d=>({
+    sku:d.querySelector('.i-sku').value.trim(), nama:d.querySelector('.i-nama').value.trim(),
+    size:d.querySelector('.i-size').value.trim(), qty:num(d.querySelector('.i-qty').value),
+    band:'' })).filter(x=>x.sku||x.nama);
+}
+async function submitSuratJalan(){
+  const items=collectItems();
+  if(!items.length){ toast('Tambahkan minimal 1 produk.','err'); return; }
+  if(items.some(x=>!x.sku)){ toast('Setiap baris harus punya SKU (matching pakai SKU).','err'); return; }
+  const payload={ noSuratJalan:$('#sjNo').textContent, tanggal:$('#sjTanggal').value,
+    jenisPergerakan:$('#sjJenis').value, gudangAsal:$('#sjAsal').value, gudangTujuan:$('#sjTujuan').value,
+    pengirim:$('#sjPengirim').value, catatan:$('#sjCatatan').value, items };
+  const btn=$('#sjSubmit'); btn.disabled=true; btn.textContent='Menyimpan…';
+  try{
+    if(DEMO){ await new Promise(r=>setTimeout(r,500)); onSubmitted(Object.assign({},payload,{_demo:true})); }
+    else{
+      const res=await fetch(APPS_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(payload)});
+      const data=await res.json();
+      if(!data.ok) throw new Error(data.error||'Gagal menyimpan');
+      payload.noSuratJalan=data.noSuratJalan||payload.noSuratJalan;
+      if(data.warnings&&data.warnings.length) toast(data.warnings[0],'err');
+      onSubmitted(payload);
+    }
+  }catch(err){ toast('Gagal: '+err.message,'err'); }
+  finally{ btn.disabled=false; btn.textContent='Simpan Surat Jalan'; }
+}
+function onSubmitted(payload){
+  toast('Surat jalan '+payload.noSuratJalan+' tersimpan.'+(payload._demo?' (demo — sheet tidak berubah)':''),'ok');
+  buildPrint(payload);
+  $('#globalBanner').innerHTML='<div class="banner info" style="border-color:var(--color-success)"><span>✓</span><div><b>'+esc(payload.noSuratJalan)+' tersimpan.</b> <button class="btn btn-primary" style="margin-left:8px" onclick="window.print()">🖨 Cetak Surat Jalan</button></div></div>';
+  window.scrollTo({top:0,behavior:'smooth'});
+  if(!DEMO) loadAll(); else loadRiwayat();
+}
+async function loadRiwayat(){
+  const box=$('#riwayatList'); if(!box) return;
+  try{
+    if(DEMO){ riwayatCache=demoRiwayat(); }
+    else{
+      const d=await fetchSheet(CONFIG.FILE_C,CONFIG.SHEET_LOG).catch(()=>null);
+      riwayatCache = d&&d.ok? groupRiwayat(d.rows):[];
+    }
+    if(!riwayatCache.length){ box.innerHTML='<p class="muted">Belum ada surat jalan.</p>'; return; }
+    box.innerHTML=riwayatCache.map((r,i)=>`<div class="riwayat-item"><div><b>${esc(r.no)}</b> · <span class="muted">${esc(r.tanggal)} · ${esc(r.jenis)} · ${r.items.length} item</span></div>
+      <button class="btn" onclick="reprint(${i})">🖨 Cetak</button></div>`).join('');
+  }catch(e){ box.innerHTML='<p class="muted">Gagal memuat riwayat.</p>'; }
+}
+function groupRiwayat(rows){
+  if(!rows||rows.length<2) return [];
+  const H=rows[0].map(h=>(''+h).toUpperCase());
+  const ci=t=>H.findIndex(h=>h.includes(t));
+  const cNo=ci('NO SURAT'),cTgl=ci('TANGGAL'),cJns=ci('PERGERAKAN'),cAsal=ci('ASAL'),cTuj=ci('TUJUAN'),
+        cSku=ci('SKU'),cNama=ci('NAMA'),cSize=ci('SIZE'),cQty=ci('QTY'),cPeng=ci('PENGIRIM'),cCat=ci('CATATAN');
+  const map={};
+  for(let r=1;r<rows.length;r++){ const row=rows[r]; const no=row[cNo]; if(!no) continue;
+    if(!map[no]) map[no]={no,tanggal:row[cTgl],jenis:row[cJns],asal:row[cAsal],tujuan:row[cTuj],pengirim:row[cPeng],catatan:row[cCat],items:[]};
+    map[no].items.push({sku:row[cSku],nama:row[cNama],size:row[cSize],qty:num(row[cQty])});
+  }
+  return Object.values(map).reverse();
+}
+function reprint(i){ const r=riwayatCache[i];
+  buildPrint({noSuratJalan:r.no,tanggal:r.tanggal,jenisPergerakan:r.jenis,gudangAsal:r.asal,gudangTujuan:r.tujuan,pengirim:r.pengirim,catatan:r.catatan,items:r.items});
+  window.print();
+}
+function buildPrint(p){
+  const total=p.items.reduce((a,it)=>a+num(it.qty),0);
+  $('#printDoc').innerHTML=`
+    <div class="pd-head"><div class="pd-logo">GSS ENTERTAINMENT</div>
+      <div class="pd-title"><div class="t">SURAT JALAN</div><div>${esc(p.noSuratJalan)}</div></div></div>
+    <div class="pd-meta">
+      <div class="row"><span class="k">Tanggal</span><span>${esc(p.tanggal||'-')}</span></div>
+      <div class="row"><span class="k">Jenis</span><span>${esc(p.jenisPergerakan||'-')}</span></div>
+      <div class="row"><span class="k">Dari</span><span>${esc(p.gudangAsal||'-')}</span></div>
+      <div class="row"><span class="k">Kepada</span><span>${esc(p.gudangTujuan||'-')}</span></div>
+    </div>
+    <table class="pd-table"><thead><tr><th>No</th><th>SKU</th><th>Nama Produk</th><th>Size</th><th class="num">Qty</th></tr></thead>
+      <tbody>${p.items.map((it,i)=>`<tr><td>${i+1}</td><td>${esc(it.sku)}</td><td>${esc(it.nama)}</td><td>${esc(it.size)}</td><td class="num">${fmt(num(it.qty))}</td></tr>`).join('')}</tbody></table>
+    <div class="pd-total">TOTAL : ${fmt(total)} pcs</div>
+    <div class="pd-note">Catatan: ${esc(p.catatan||'')}</div>
+    <div class="pd-sign"><div><div class="line">Pengirim${p.pengirim?' — '+esc(p.pengirim):''} (nama &amp; tanggal)</div></div>
+      <div><div class="line">Penerima (nama &amp; tanggal)</div></div></div>
+    <div class="pd-foot">Dicetak ${new Date().toLocaleString('id-ID')}</div>`;
+}
+
+/* =========================================================
+   DRAWER (detail SKU)
+   ========================================================= */
+function findSku(sku){
+  const k=(sku||'').toUpperCase();
+  for(const p of STATE.lilo){ const f=p.sizes.find(s=>(s.sku||'').toUpperCase()===k); if(f) return {type:'GSS',prod:p,size:f}; }
+  const m=STATE.musica.find(x=>(x.sku||'').toUpperCase()===k); if(m) return {type:'Musica',musica:m};
+  return null;
+}
+function openSku(sku){
+  if(!sku){ return; }
+  const info=findSku(sku); const body=$('#drawerBody');
+  $('#drawerTitle').textContent=sku;
+  if(!info){ body.innerHTML='<p class="muted">SKU tidak ditemukan di data.</p>'; }
+  else if(info.type==='GSS'){ const p=info.prod;
+    const photo=p.img?`<img class="big-photo" src="${esc(p.img)}" onerror="this.style.display='none'">`:`<div class="big-photo" style="display:grid;place-items:center"><div class="ph" style="width:64px;height:64px;font-size:22px">${esc(initials(p.band))}</div></div>`;
+    body.innerHTML=photo+`<div class="kv">
+      <span class="k">Produk</span><span>${esc(p.judul)}</span>
+      <span class="k">Band</span><span>${esc(p.band)}</span>
+      <span class="k">Size</span><span>${esc(info.size.size)}</span>
+      <span class="k">Vendor</span><span>${esc(p.vendor||'-')}</span>
+      <span class="k">Harga</span><span>${p.harga?rupiah(p.harga):'belum diisi'}</span>
+      <span class="k">Stok Lilo</span><span><b>${fmt(info.size.lilo)}</b></span></div>
+      <p class="muted" style="margin-top:14px">Riwayat surat jalan SKU ini akan tampil di sini setelah ada transaksi.</p>`;
+  } else { const m=info.musica;
+    body.innerHTML=`<div class="big-photo" style="display:grid;place-items:center"><div class="ph" style="width:64px;height:64px;font-size:22px">${esc(initials(m.artist))}</div></div>
+      <div class="kv"><span class="k">Nama</span><span>${esc(m.nama)}</span>
+      <span class="k">Artis</span><span>${esc(m.artist)}</span>
+      <span class="k">Harga</span><span>${m.harga?rupiah(m.harga):'—'}</span>
+      <span class="k">Stok</span><span><b>${fmt(m.stock)}</b></span></div>`;
+  }
+  $('#scrim').classList.add('show'); $('#drawer').classList.add('show');
+}
+function closeDrawer(){ $('#scrim').classList.remove('show'); $('#drawer').classList.remove('show'); }
+
+/* =========================================================
+   UI WIRING
+   ========================================================= */
+function switchTab(name){
+  $$('#nav button').forEach(b=>b.classList.toggle('active',b.dataset.tab===name));
+  $$('.tab').forEach(t=>t.classList.add('hidden'));
+  $('#tab-'+name).classList.remove('hidden');
+  if(name==='band') renderBand();
+  if(name==='gudang') renderGudang();
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+function toast(msg,kind){ const t=$('#toast'); t.textContent=msg; t.className='toast show '+(kind||''); setTimeout(()=>t.classList.remove('show'),3500); }
+
+/* lightbox */
+$('#lightbox').onclick=()=>$('#lightbox').classList.remove('show');
+document.addEventListener('click',e=>{ if(e.target.classList&&e.target.classList.contains('thumb')){ $('#lightboxImg').src=e.target.src; $('#lightbox').classList.add('show'); }});
+
+/* nav */
+$('#nav').addEventListener('click',e=>{ if(e.target.dataset.tab) switchTab(e.target.dataset.tab); });
+$('#btnRefresh').onclick=loadAll;
+$('#drawerClose').onclick=closeDrawer; $('#scrim').onclick=closeDrawer;
+
+/* settings modal */
+$('#btnSettings').onclick=()=>{ $('#urlInput').value=APPS_URL; $('#modal').classList.add('show'); };
+$('#modalCancel').onclick=()=>$('#modal').classList.remove('show');
+$('#modalSave').onclick=()=>{ APPS_URL=$('#urlInput').value.trim(); localStorage.setItem(LS_URL,APPS_URL); DEMO=!APPS_URL; $('#modal').classList.remove('show'); loadAll(); };
+$('#modalDemo').onclick=()=>{ APPS_URL=''; localStorage.removeItem(LS_URL); DEMO=true; $('#modal').classList.remove('show'); loadAll(); };
+
+/* =========================================================
+   DEMO DATA (contoh dari sheet asli — supaya bisa dilihat tanpa deploy)
+   ========================================================= */
+function loadDemo(){
+  STATE.lilo=[
+    {judul:'THE JANSEN BORNEAN TOUR [PONTIANAK]',band:'THE JANSEN BORNEAN TOUR',vendor:'Goods Project co',harga:250000,total:48,img:'',
+     sizes:[{size:'S',sku:'TJBTPS',lilo:1},{size:'M',sku:'TJBTPM',lilo:16},{size:'L',sku:'TJBTPL',lilo:20},{size:'XL',sku:'TJBTPX',lilo:11},{size:'XXL',sku:'TJBTP2X',lilo:0}]},
+    {judul:'THE JANSEN BORNEAN TOUR [BANJARMASIN]',band:'THE JANSEN BORNEAN TOUR',vendor:'Goods Project co',harga:250000,total:35,img:'',
+     sizes:[{size:'S',sku:'TJBTBS',lilo:1},{size:'M',sku:'TJBTBM',lilo:0},{size:'L',sku:'TJBTBL',lilo:12},{size:'XL',sku:'TJBTBX',lilo:7},{size:'XXL',sku:'TJBTB2X',lilo:3}]},
+    {judul:'MODERN GUNS - THE PAST',band:'MODERN GUNS',vendor:'Goods Project co',harga:250000,total:24,img:'',
+     sizes:[{size:'S',sku:'MGPS',lilo:6},{size:'M',sku:'MGPM',lilo:6},{size:'L',sku:'MGPL',lilo:1},{size:'XL',sku:'MGPX',lilo:8},{size:'XXL',sku:'MGP2X',lilo:3}]},
+    {judul:'COLLAPSE STARHORSE',band:'COLLAPSE STARHORSE',vendor:'Zero Printing Suplly',harga:250000,total:27,img:'',
+     sizes:[{size:'S',sku:'COSHS',lilo:1},{size:'M',sku:'COSHM',lilo:8},{size:'L',sku:'COSHL',lilo:8},{size:'XL',sku:'COSHXL',lilo:9},{size:'XXL',sku:'COSHXXL',lilo:1}]},
+    {judul:'ZEAL CAP',band:'ZEAL CAP',vendor:'Goods Project co',harga:225000,total:17,img:'',sizes:[{size:'All size',sku:'ZEALCP',lilo:17}]}
+  ];
+  STATE.musica=[
+    {sku:'BAG0025B',nama:'NOAH - BAGPACK BLACK',artist:'NOAH',stock:83,harga:549000},
+    {sku:'CAP0023R',nama:'NOAH-TOPI OFFICIAL SHBT NOAH',artist:'NOAH',stock:476,harga:200000},
+    {sku:'BAG0003B',nama:"D'MASIV - CANVAS BAG HITAM",artist:"D'MASIV",stock:28,harga:60000},
+    {sku:'CAP0012',nama:'GEISHA - TOPI BASEBALL PUTIH',artist:'GEISHA',stock:60,harga:90000},
+    {sku:'JKT0015BL',nama:'NOAH - JAKET LOGO FONT BLACK',artist:'NOAH',stock:103,harga:399000},
+    {sku:'BAG0024CR',nama:'CHRISYE-TOTTE BAG KISAH KASIH',artist:'CHRISYE',stock:2,harga:149000}
+  ];
+  STATE.bulk=[
+    {merch:'FOLDABLE BAG LIPA',sizes:[0,0,0,0,0],allsize:1250,total:1250},
+    {merch:'TSHIRT HEADPHONE',sizes:[190,558,1363,864,131],allsize:0,total:2991},
+    {merch:'TSHIRT LONGSLEEVE',sizes:[23,431,941,723,154],allsize:0,total:2417},
+    {merch:'TSHIRT MIXTAPE',sizes:[0,85,1090,827,62],allsize:0,total:2199},
+    {merch:'TSHIRT RAGLAN',sizes:[264,1299,1832,802,361],allsize:0,total:4284},
+    {merch:'TSHIRT TAD TOUR  BLACK WASH',sizes:[0,321,1404,1222,53],allsize:0,total:3201},
+    {merch:'TSHIRT TAD TOUR WHITE',sizes:[101,1270,1543,1387,307],allsize:0,total:4797},
+    {merch:'ZIPPER TAD BLACK',sizes:[0,66,220,151,0],allsize:0,total:437}
+  ];
+  STATE.liloSO7=[
+    {produk:'TSHIRT TAD TOUR WHITE',rows:[{size:'S',qty:12},{size:'M',qty:40},{size:'L',qty:55},{size:'XL',qty:30},{size:'XXL',qty:8}],total:145},
+    {produk:'HOODIE TAD NAVY',rows:[{size:'S',qty:4},{size:'M',qty:0},{size:'L',qty:0},{size:'XL',qty:12},{size:'XXL',qty:28}],total:44}
+  ];
+  STATE.referensi={}; // sengaja kosong -> demonstrasi "Harga belum diisi"
+  STATE.lastUpdate=new Date();
+}
+function demoRiwayat(){ return []; }
+
+/* =========================================================
+   START
+   ========================================================= */
+loadAll();
+</script>
+</body>
+</html>
